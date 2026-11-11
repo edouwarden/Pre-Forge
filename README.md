@@ -8,7 +8,7 @@ The design was originally inspired by [`edouwarden/Discord-self-augmented-Bot`](
 
 The newer TheForge implementation is not in this folder. This repository documents where the idea started.
 
-![Pre-Forge overview: Discord, the supervisor bot, and the worker container](assets/overview.svg)
+![Pre-Forge overview: Discord, the supervisor bot, and the worker container](assets/overview.gif)
 
 ---
 
@@ -40,7 +40,7 @@ The important loop is **human-in-the-loop escalation**: the agent is allowed to 
 
 ## Demo
 
-![Animated demo: a fake Discord channel and worker terminal](assets/demo.svg)
+![Animated demo: a fake Discord channel and worker terminal](assets/demo.gif)
 
 The animation is a scripted mock-up: a command is typed, the container starts, the plan is confirmed, the worker asks which package manager to use, and the human answers. The terminal on the right shows the matching bridge and agent output. Nothing executes.
 
@@ -60,7 +60,7 @@ For an interactive version with a fake Discord input box and a live terminal log
 | `app_template3/tools/` | Read file, write file, execute command, ask user, LLM client, path guard |
 | `app_template3/wsClient.ts` | Worker-side WebSocket client with typed `ask()` and token handshake |
 | `app_template3/Dockerfile` | Worker image; code in `/init`, workspace in `/app` |
-| `assets/` | Animated SVG overview and demo |
+| `assets/` | Animated SVG sources and GIF exports for the README |
 | `demo/` | Self-contained interactive mock of the Discord bridge |
 
 ## Why it is “pre-Forge”
@@ -201,7 +201,7 @@ Both typechecks pass on the cleaned snapshot.
 - `node_modules/`, `.env*`, `projects/`, `dist/`, and logs are ignored.
 - The upstream `Discord-self-augmented-Bot` repository returns 404, so it could not be inspected or cleaned.
 - The `projects/` directory is kept only as an empty mount point; workspaces are not committed.
-- The illustrations and interactive demo are self-contained SVGs and HTML with no external assets or trackers.
+- The illustrations ship as both animated SVGs and GIF exports; the interactive demo is a single self-contained HTML file. There are no external assets or trackers.
 
 ## License
 
