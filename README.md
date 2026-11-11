@@ -82,7 +82,7 @@ That is the evolution story: **from “spawn a sandbox and ask a human” to “
 
 ## Hardening applied to this snapshot
 
-The snapshot was cleaned up before publication. The prototype logic is still the same design, but the unsafe defaults were removed:
+The prototype logic is still the same design, but the unsafe defaults were removed:
 
 - The supervisor now requires `DISCORD_TOKEN`, `QUESTION_CHANNEL_ID`, `AUTHORIZED_USER_IDS`, `BRIDGE_TOKEN` (at least 16 characters), and `OPENROUTER_API_KEY`. It fails fast instead of starting half-configured.
 - `/create-container` is restricted to the Discord user IDs listed in `AUTHORIZED_USER_IDS`.
