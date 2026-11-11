@@ -4,9 +4,7 @@
 
 This is the original prototype: a Discord-controlled Docker sandbox that runs a coding agent inside a container and escalates to a human over Discord when the agent gets stuck. It is kept as the starting point of the TheForge lineage, not as a finished product.
 
-The idea came from [`edouwarden/Discord-self-augmented-Bot`](https://github.com/edouwarden/Discord-self-augmented-Bot), but this is not a fork of it. That bot was first used in a private Discord server with friends: one command replaced a specific user's message with a webhook that kept the same avatar and display name, but posted binary content instead of the original text. The part that mattered was that the behaviour could change on the fly: anyone in the server could do it, without writing or deploying code. Pre-Forge took that "change the bot while it is running" idea and pointed it at a sandboxed coding agent.
-
-As of November 2026 the upstream repository is no longer publicly reachable, so it could not be inspected. The code here is an independent implementation of the idea, not a copy of that bot.
+The idea came from [`edouwarden/Discord-self-augmented-Bot`](https://github.com/edouwarden/Discord-self-augmented-Bot), a separate bot kept as an archived public repository. That repository has the original story and experiments. Pre-Forge is not a fork; it points the same "change the bot while it is running" idea at a sandboxed coding agent instead.
 
 The newer TheForge implementation is not in this folder. This repository documents where the idea started.
 
@@ -184,7 +182,6 @@ Both typechecks pass, and the worker image builds with `docker build`.
 
 - No `.env`, bot token, OpenRouter key, or personal project data is included.
 - `node_modules/`, `.env*`, `projects/`, `dist/`, and logs are ignored.
-- The upstream `Discord-self-augmented-Bot` repository returns 404, so it could not be inspected.
 - The `projects/` directory is kept only as an empty mount point; workspaces are not committed.
 - The illustrations ship as both animated SVGs and GIF exports; the interactive demo is a single self-contained HTML file. There are no external assets or trackers.
 
@@ -204,5 +201,5 @@ MIT. See [`LICENSE`](LICENSE).
 ## Related
 
 - Current implementation: [`../theforge/version3/`](../theforge/version3/) and [github.com/edouwarden/theforge](https://github.com/edouwarden/theforge).
-- Original inspiration: [`edouwarden/Discord-self-augmented-Bot`](https://github.com/edouwarden/Discord-self-augmented-Bot) (no longer publicly reachable as of November 2026).
+- Original inspiration: [`edouwarden/Discord-self-augmented-Bot`](https://github.com/edouwarden/Discord-self-augmented-Bot) (archived).
 - Portfolio index: [`../PROJECTS.md`](../PROJECTS.md).
