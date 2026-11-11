@@ -80,37 +80,6 @@ This prototype has the seed of that system:
 
 That is the evolution story: **from “spawn a sandbox and ask a human” to “an orchestrated pipeline with explicit context, cost, and merge control.”**
 
-## Hardening applied to this snapshot
-
-The prototype logic is still the same design, but the unsafe defaults were removed:
-
-- The supervisor now requires `DISCORD_TOKEN`, `QUESTION_CHANNEL_ID`, `AUTHORIZED_USER_IDS`, `BRIDGE_TOKEN` (at least 16 characters), and `OPENROUTER_API_KEY`. It fails fast instead of starting half-configured.
-- `/create-container` is restricted to the Discord user IDs listed in `AUTHORIZED_USER_IDS`.
-- The `folder` option must be a plain name under `projects/`; traversal, absolute paths, and symlinks that escape the root are rejected. Container names are validated too.
-- The WebSocket bridge uses a token handshake over `/ws` instead of query-string authentication. A connection that does not authenticate within 5 seconds is closed.
-- Worker containers no longer receive `OPENROUTER_API_KEY`. They call the supervisor’s authenticated LLM proxy, which injects the real key upstream.
-- Host networking was replaced with Docker bridge networking and `host.docker.internal:host-gateway`.
-- Containers run with `AutoRemove`, a 2 GB memory limit, 2 CPUs, a 512-process limit, `CapDrop: ALL`, `no-new-privileges`, and a `noexec` `/tmp`.
-- Worker commands go through an allowlist and shell-metacharacter check by default, with a 60-second timeout and a 1 MB output buffer.
-- File tools resolve paths inside the project root, so the agent cannot read or write outside `/app`.
-- Questions are serialized in the supervisor, so two concurrent workers cannot race for the same Discord reply.
-- The worker image is configurable through `WORKER_IMAGE` instead of being hardcoded.
-- The worker code lives in `/init`; the host workspace is mounted at `/app`, removing the old `/app/project` mismatch.
-
-### Prototype bugs fixed during cleanup
-
-The original snapshot shipped with several logic bugs. They were fixed rather than preserved:
-
-- The planner filtered the wrong registry names (`thinking_agent`/`planner_agent` vs. `thinking_employe`/`planner_employe`).
-- The planner produced semicolon-separated tasks while the manager split on newlines; the manager now accepts both.
-- Tasks were dispatched without accumulated `history`; history is now passed through the loop.
-- `write_file` split input on every comma; it now splits only on the first comma.
-- The answer validator stored no expected schema and always JSON-parsed, so plain `z.string()` answers failed. It now handles strings and structured values correctly.
-- Command execution ran in `/app/project`; it now runs in `/app`.
-- The Discord prompt said “within 5 minutes” while the collector timed out after 10; both now say 10 minutes.
-- The meaningless `ws.send()` error-code check was removed.
-- The unused `Verification`/`Execution` stubs were removed.
-
 ## Status
 
 Archived prototype, hardened for inspection and careful local use. It is **not production-ready** and has no tests.
