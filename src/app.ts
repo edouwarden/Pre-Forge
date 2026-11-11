@@ -320,18 +320,31 @@ async function handleCreateContainer(interaction: CommandInteraction): Promise<v
 
         await interaction.deferReply({ ephemeral: true });
 
+        const workerEnv = [
+            `command=${command}`,
+            `attachments=${attachments.join(',')}`,
+            `BRIDGE_TOKEN=${BRIDGE_TOKEN}`,
+            `WS_URL=ws://host.docker.internal:${WS_PORT}/ws`,
+            `LLM_ENDPOINT=http://host.docker.internal:${WS_PORT}/llm/chat/completions`,
+            `ALLOWED_COMMANDS=${process.env.ALLOWED_COMMANDS || ''}`,
+        ];
+
+        // Optional overrides. Omit them when unset so the worker keeps its defaults.
+        for (const key of ['LLM_MODEL', 'PLANNER_MODEL', 'CODER_MODEL', 'MAX_RETRIES']) {
+            const value = process.env[key];
+            if (value) workerEnv.push(`${key}=${value}`);
+        }
+
         const container = await docker.createContainer({
             Image: WORKER_IMAGE,
             name: containerName,
             WorkingDir: '/app',
-            Env: [
-                `command=${command}`,
-                `attachments=${attachments.join(',')}`,
-                `BRIDGE_TOKEN=${BRIDGE_TOKEN}`,
-                `WS_URL=ws://host.docker.internal:${WS_PORT}/ws`,
-                `LLM_ENDPOINT=http://host.docker.internal:${WS_PORT}/llm/chat/completions`,
-                `ALLOWED_COMMANDS=${process.env.ALLOWED_COMMANDS || ''}`,
-            ],
+            // Run as the supervisor's user on Linux so files in the mounted
+            // workspace are not left owned by root.
+            User: typeof process.getuid === 'function' && typeof process.getgid === 'function'
+                ? `${process.getuid()}:${process.getgid()}`
+                : undefined,
+            Env: workerEnv,
             HostConfig: {
                 Binds: [`${workdir}:/app`],
                 NetworkMode: 'bridge',
@@ -347,6 +360,19 @@ async function handleCreateContainer(interaction: CommandInteraction): Promise<v
         });
 
         await container.start();
+
+        // Worker output is the only diagnostics available if it fails before
+        // the WebSocket bridge is up, so mirror it to the supervisor console.
+        container.logs({ follow: true, stdout: true, stderr: true }, (error, stream) => {
+            if (error || !stream) {
+                if (error) console.error(`Unable to read logs for ${containerName}:`, error);
+                return;
+            }
+            docker.modem.demuxStream(stream, process.stdout, process.stderr);
+            stream.on('error', logError => {
+                console.error(`Log stream for ${containerName} failed:`, logError);
+            });
+        });
 
         await interaction.editReply(
             `Container "${containerName}" created and started.\n` +
@@ -421,50 +447,56 @@ async function processQuestion(data: Message, ws: ServerWebSocket<unknown>): Pro
             max: 1,
         });
 
-        collector.on('collect', async message => {
-            if (!activeConnections.has(ws)) {
-                await questionMsg.reply('The worker disconnected before the answer was received.').catch(console.error);
-                return;
-            }
-
-            const response: Message = {
-                type: 'answer',
-                context: data.context,
-                message: message.content,
-                timestamp: new Date().toISOString(),
-                id: data.id,
-            };
-
-            try {
-                ws.send(JSON.stringify(response));
-            } catch (error) {
-                console.error('Error sending answer to worker:', error);
-                return;
-            }
-
-            await message.react('✅').catch(console.error);
-            await questionMsg.reply({ content: 'Answer sent to the worker.', allowedMentions: { parse: [] } }).catch(console.error);
-        });
-
-        collector.on('end', collected => {
-            if (collected.size > 0) return;
-
-            const timeoutResponse: Message = {
-                type: 'error',
-                context: data.context,
-                message: 'No response received within the time limit',
-                timestamp: new Date().toISOString(),
-                id: data.id,
-            };
-
-            if (activeConnections.has(ws)) {
-                try {
-                    ws.send(JSON.stringify(timeoutResponse));
-                } catch (error) {
-                    console.error('Error sending timeout to worker:', error);
+        // Wait for the collector to finish before releasing the next question.
+        // Without this, two workers can have collectors open in the same
+        // channel and steal each other's answers.
+        await new Promise<void>(resolve => {
+            collector.on('collect', async message => {
+                if (!activeConnections.has(ws)) {
+                    await questionMsg.reply('The worker disconnected before the answer was received.').catch(console.error);
+                    return;
                 }
-            }
-            void questionMsg.reply('No response received within the time limit.').catch(console.error);
+
+                const response: Message = {
+                    type: 'answer',
+                    context: data.context,
+                    message: message.content,
+                    timestamp: new Date().toISOString(),
+                    id: data.id,
+                };
+
+                try {
+                    ws.send(JSON.stringify(response));
+                } catch (error) {
+                    console.error('Error sending answer to worker:', error);
+                    return;
+                }
+
+                await message.react('✅').catch(console.error);
+                await questionMsg.reply({ content: 'Answer sent to the worker.', allowedMentions: { parse: [] } }).catch(console.error);
+            });
+
+            collector.on('end', collected => {
+                if (collected.size === 0) {
+                    const timeoutResponse: Message = {
+                        type: 'error',
+                        context: data.context,
+                        message: 'No response received within the time limit',
+                        timestamp: new Date().toISOString(),
+                        id: data.id,
+                    };
+
+                    if (activeConnections.has(ws)) {
+                        try {
+                            ws.send(JSON.stringify(timeoutResponse));
+                        } catch (error) {
+                            console.error('Error sending timeout to worker:', error);
+                        }
+                    }
+                    void questionMsg.reply('No response received within the time limit.').catch(console.error);
+                }
+                resolve();
+            });
         });
     } catch (error) {
         console.error('Error processing question:', error);

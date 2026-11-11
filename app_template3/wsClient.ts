@@ -117,6 +117,17 @@ export class WSClient {
                 this.AgentshouldStop = true;
             }
 
+            // A supervisor-side failure (for example a question timeout) should
+            // reject the matching ask() instead of leaving it until its own timer.
+            if (message.type === 'error' && message.id) {
+                const failed = this.pendingRequests.get(message.id);
+                if (failed) {
+                    this.pendingRequests.delete(message.id);
+                    failed.reject(new Error(message.message));
+                }
+                return;
+            }
+
             if (message.type !== 'answer' || !message.id) return;
 
             const request = this.pendingRequests.get(message.id);

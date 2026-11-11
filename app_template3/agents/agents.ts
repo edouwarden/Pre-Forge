@@ -28,6 +28,7 @@ export enum Tools {
 interface Tool {
     name: string;
     description: string;
+    parameters?: Record<string, any> | string;
     input?: Record<string, any>;
     output?: Record<string, any>;
 }
@@ -65,8 +66,13 @@ export async function start(
         initialPrompt +
         (accessible.length > 0
             ? `\n\nTu peux, uniquement si c'est necessaire pour remplir l'objectif, utiliser les outils suivants:\n${accessible
-                  .map(tool => `- ${tool.name}: ${tool.description}`)
-                  .join('\n')}`
+                  .map(tool => {
+                      const params = tool.parameters && typeof tool.parameters === 'object'
+                          ? ` | arguments: ${JSON.stringify(tool.parameters)}`
+                          : '';
+                      return `- ${tool.name}: ${tool.description}${params}`;
+                  })
+                  .join('\n')}\n\nPour appeler un outil, reponds avec un objet JSON de la forme {"type":"tool","name":"<outil>","content":"<arguments>"}.`
             : '') +
         '\nUne fois l\'objectif rempli, Tu dois repondre avec "type":"end" et le resultat.',
     );

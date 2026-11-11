@@ -144,4 +144,15 @@ if (!prompt) {
 }
 
 wsClient.info('Manager', '🟢 Started, instruction received:', { prompt, attachments });
-manager.handleInstruction(prompt, attachments).catch(console.error);
+
+// The container is created with AutoRemove. Exit once the task is done so it
+// does not linger forever, but give the last bridge messages a moment to flush.
+try {
+  await manager.handleInstruction(prompt, attachments);
+} catch (error) {
+  console.error(error);
+} finally {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  wsClient.close();
+  process.exit(0);
+}

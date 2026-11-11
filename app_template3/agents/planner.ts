@@ -46,7 +46,7 @@ Commence des maintenant en attendant un message utilisateur.`,
         chatHistory,
         "String d'une liste composee de taches sous le format suivant : 'nom_de_l_employe_present. tache_a_accomplir;'",
         {
-            model: 'qwen/qwen2.5-vl-3b-instruct:free',
+            model: process.env.PLANNER_MODEL || 'google/gemma-4-31b-it:free',
         },
     );
 

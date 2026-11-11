@@ -4,7 +4,9 @@
 
 This is the original prototype: a Discord-controlled Docker sandbox that runs a coding agent inside a container and escalates to a human over Discord when the agent gets stuck. It is kept as the starting point of the TheForge lineage, not as a finished product.
 
-The design was originally inspired by [`edouwarden/Discord-self-augmented-Bot`](https://github.com/edouwarden/Discord-self-augmented-Bot). As of November 2026 that upstream repository is no longer publicly reachable, so this folder is the surviving implementation.
+The idea came from [`edouwarden/Discord-self-augmented-Bot`](https://github.com/edouwarden/Discord-self-augmented-Bot), but this is not a fork of it. That bot was first used in a private Discord server with friends: one command replaced a specific user's message with a webhook that kept the same avatar and display name, but posted binary content instead of the original text. The part that mattered was that the behaviour could change on the fly: anyone in the server could do it, without writing or deploying code. Pre-Forge took that "change the bot while it is running" idea and pointed it at a sandboxed coding agent.
+
+As of November 2026 the upstream repository is no longer publicly reachable, so it could not be inspected. The code here is an independent implementation of the idea, not a copy of that bot.
 
 The newer TheForge implementation is not in this folder. This repository documents where the idea started.
 
@@ -82,9 +84,17 @@ That is the evolution story: **from “spawn a sandbox and ask a human” to “
 
 ## Status
 
-Archived prototype, hardened for inspection and careful local use. It is **not production-ready** and has no tests.
+Archived prototype, kept as a POC. It is runnable enough to demonstrate the full loop, but expect rough edges:
 
-## Remaining security limits
+- Free OpenRouter model IDs rotate. Override `LLM_MODEL`, `PLANNER_MODEL`, and `CODER_MODEL` when the defaults stop working.
+- The worker does not reconnect if the WebSocket bridge drops. The task fails instead.
+- Questions are serialized through one Discord channel, so concurrent tasks wait for each other.
+- The planner and coder rely on small free models following a JSON tool protocol, which they do not always do well.
+- There are no automated tests, no rate limiting, no cost accounting, and no state recovery.
+
+It is **not production-ready**.
+
+## Security limits
 
 Read these before running it anywhere:
 
@@ -112,6 +122,8 @@ bun install
 cp .env.example .env
 # edit .env: DISCORD_TOKEN, CLIENT_ID, QUESTION_CHANNEL_ID,
 #            AUTHORIZED_USER_IDS, BRIDGE_TOKEN, OPENROUTER_API_KEY
+# optional: override LLM_MODEL / PLANNER_MODEL / CODER_MODEL if the
+#           default free models are unavailable
 
 # 3. Build the worker image
 docker build -t bun-typescript-app ./app_template3
@@ -148,6 +160,10 @@ The supervisor injects these values into each worker container:
 | `LLM_ENDPOINT` | `http://host.docker.internal:3000/llm/chat/completions` | Host-side LLM proxy |
 | `PROJECT_DIR` | `/app` | Workspace root for the file and command tools |
 | `ALLOWED_COMMANDS` | built-in list | Optional command allowlist; `*` disables it |
+| `LLM_MODEL` | `cohere/north-mini-code:free` | Default model for helper calls such as file summaries |
+| `PLANNER_MODEL` | `google/gemma-4-31b-it:free` | Model used by the planner |
+| `CODER_MODEL` | `cohere/north-mini-code:free` | Model used by the coder |
+| `MAX_RETRIES` | `3` | LLM request attempts (1–5) |
 
 The worker sends an `auth` message as its first WebSocket frame. The supervisor accepts only a constant-time token match and then relays `info`/`error`/`warn`/`debug` messages and `question`/`answer` exchanges.
 
@@ -162,13 +178,13 @@ bun build ./src/prompt_optimizer.ts --target=bun --outdir=/tmp/agent-build
 bun build ./app_template3/manager.ts --target=bun --outdir=/tmp/agent-build
 ```
 
-Both typechecks pass on the cleaned snapshot.
+Both typechecks pass, and the worker image builds with `docker build`.
 
-## Cleanup notes
+## Repository notes
 
 - No `.env`, bot token, OpenRouter key, or personal project data is included.
 - `node_modules/`, `.env*`, `projects/`, `dist/`, and logs are ignored.
-- The upstream `Discord-self-augmented-Bot` repository returns 404, so it could not be inspected or cleaned.
+- The upstream `Discord-self-augmented-Bot` repository returns 404, so it could not be inspected.
 - The `projects/` directory is kept only as an empty mount point; workspaces are not committed.
 - The illustrations ship as both animated SVGs and GIF exports; the interactive demo is a single self-contained HTML file. There are no external assets or trackers.
 

@@ -158,8 +158,12 @@ export const OpenRouterRequestSchema = z.object({
   }
 );
 
+// Free model IDs rotate. Keep the default in one place and let the supervisor
+// inject LLM_MODEL when a different endpoint/model is preferred.
+const DEFAULT_MODEL = process.env.LLM_MODEL || 'cohere/north-mini-code:free';
+
 const defaultOptions: z.infer<typeof OpenRouterRequestSchema> = {
-    model: 'meta-llama/llama-4-maverick:free',
+    model: DEFAULT_MODEL,
 };
 
 export type LLM_options = Partial<z.infer<typeof OpenRouterRequestSchema>>;
@@ -215,9 +219,13 @@ function formatPrompt(prompt: string | Message[], expectedFormat?: z.ZodType<any
         content: prompt
     }];
     if (expectedFormat) {
+        const description = convertZodToText(expectedFormat);
+        const instruction = expectedFormat instanceof z.ZodObject
+            ? `un objet JSON stringifie dans le format suivant (sans formatage Markdown):\`\`\`${description}\`\`\``
+            : `une valeur JSON valide (pour un string, une chaine entre guillemets) decrite ainsi: ${description}`;
         messages.push({
             role: 'system' as const,
-            content: `Ta reponse doit etre ${expectedFormat ? "un objet JSON stringifie dans le format suivant (sans formatage Markdown):```" + convertZodToText(expectedFormat) + "```" : "un string"}  `
+            content: `Ta reponse doit etre ${instruction}`
         });
     }
     return messages;
@@ -281,7 +289,23 @@ export async function query(prompt: string | Message[], expectedFormat?: z.ZodTy
                 return { success: false, error: 'Empty response', raw: null };
             if (!expectedFormat)
                 return { success: true, data: response };
-            
+
+            // A plain string is the common case for ask_user and the manager's
+            // free-text questions. Accept both raw text and a JSON string.
+            if (expectedFormat instanceof z.ZodString) {
+                let value = response.trim();
+                if (value.startsWith('```')) {
+                    value = value.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+                }
+                try {
+                    const parsed = JSON.parse(value);
+                    if (typeof parsed === 'string') value = parsed;
+                } catch {
+                    // Raw text is valid here.
+                }
+                return { success: true, data: expectedFormat.parse(value), raw: response };
+            }
+
             try {
                 // Safe JSON parsing that handles potential escape characters
                 let parsedResponse;

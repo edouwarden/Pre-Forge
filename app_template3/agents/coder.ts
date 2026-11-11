@@ -86,7 +86,7 @@ Commence des maintenant en attendant un message utilisateur.`,
         chatHistory,
         undefined,
         {
-            model: 'qwen/qwen-2.5-coder-32b-instruct:free',
+            model: process.env.CODER_MODEL || 'cohere/north-mini-code:free',
         },
     );
 

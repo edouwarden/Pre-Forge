@@ -14,10 +14,9 @@
         },
         {
             "name": "write_file",
-            "description": "Write content to a file",
+            "description": "Write content to a file. Arguments are one string: \"path,content\".",
             "parameters": {
-                "path": "string - Absolute path where the file should be written",
-                "content": "string - Content to write to the file"
+                "content": "string - path,content; path is relative to the project root"
             }
         },
         {

@@ -18,4 +18,4 @@ ENV LLM_ENDPOINT=http://host.docker.internal:3000/llm/chat/completions
 ENV command=""
 ENV attachments=""
 
-CMD ["bun", "run", "manager.ts"]
+CMD ["bun", "run", "/init/manager.ts"]
