@@ -1,0 +1,38 @@
+{
+    "tools": [
+        {
+            "name": "get_current_time",
+            "description": "Get the current time",
+            "parameters": "null"
+        },
+        {
+            "name": "read_file",
+            "description": "Read content from a file",
+            "parameters": {
+                "path": "string - Absolute path to the file to read"
+            }
+        },
+        {
+            "name": "write_file",
+            "description": "Write content to a file",
+            "parameters": {
+                "path": "string - Absolute path where the file should be written",
+                "content": "string - Content to write to the file"
+            }
+        },
+        {
+            "name": "execute_command",
+            "description": "Execute a shell command",
+            "parameters": {
+                "command": "string - Command to execute"
+            }
+        },
+        {
+            "name": "ask_user",
+            "description": "Ask a question to the user and get their response",
+            "parameters": {
+                "question": "string - The question to ask the user"
+            }
+        }
+    ]
+}

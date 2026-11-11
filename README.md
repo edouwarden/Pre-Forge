@@ -1,0 +1,208 @@
+# Pre-Forge (v0)
+
+**The first version of what became TheForge.**
+
+This is the original prototype: a Discord-controlled Docker sandbox that runs a coding agent inside a container and escalates to a human over Discord when the agent gets stuck. It is kept as the starting point of the TheForge lineage, not as a finished product.
+
+The design was originally inspired by [`edouwarden/Discord-self-augmented-Bot`](https://github.com/edouwarden/Discord-self-augmented-Bot). As of November 2026 that upstream repository is no longer publicly reachable, so this folder is the surviving implementation.
+
+The newer TheForge implementation is not in this folder. This repository documents where the idea started.
+
+---
+
+## What it does
+
+```text
+Discord
+  │  /create-container <folder> <name> <command> [attachments]
+  ▼
+Supervisor bot (src/app.ts)
+  │  validates the folder and container name
+  │  creates a Docker container
+  │  mounts ./projects/<folder> → /app
+  │  serves an authenticated WebSocket bridge on :3000/ws
+  │  serves an authenticated LLM proxy on :3000/llm/chat/completions
+  ▼
+Worker container (app_template3/)
+  │  manager → planner → coder / thinking
+  │  tools: read, write, execute, ask_user
+  │
+  ├─ normal progress ──► info/debug messages back to Discord
+  └─ blocked ──────────► question over WebSocket
+                          supervisor posts it in Discord
+                          human answers
+                          worker continues
+```
+
+The important loop is **human-in-the-loop escalation**: the agent is allowed to stop and ask a real person instead of hallucinating a solution.
+
+## What is in the folder
+
+| Path | Role |
+|---|---|
+| `src/app.ts` | Supervisor: Discord bot, `/create-container`, Docker API, authenticated WebSocket bridge, LLM proxy, question relay |
+| `src/deploy-commands.ts` | Registers the slash command |
+| `src/prompt_optimizer.ts` | Early experiment in improving prompts from expected/actual outputs |
+| `app_template3/manager.ts` | Worker entry point: plan, confirm, dispatch tasks |
+| `app_template3/agents/` | `planner`, `coder`, `thinking`, agent registry |
+| `app_template3/tools/` | Read file, write file, execute command, ask user, LLM client, path guard |
+| `app_template3/wsClient.ts` | Worker-side WebSocket client with typed `ask()` and token handshake |
+| `app_template3/Dockerfile` | Worker image; code in `/init`, workspace in `/app` |
+
+## Why it is “pre-Forge”
+
+TheForge’s design document describes a much larger machine: TREEFRAG code representation, context compression, cost and time budgets, a state file for crash recovery, security checks, a refactor loop, a shadow workspace, and a merge queue.
+
+This prototype has the seed of that system:
+
+| Pre-Forge (this folder) | TheForge (later design) |
+|---|---|
+| One container per command | Isolated workspace per task |
+| Planner → coder → ask human | Planner → coder → security → test → refactor → merge |
+| Plain prompt context | TREEFRAG / stingy context |
+| Human answers over Discord | Human escalation plus formal state file and approval gates |
+| No cost accounting | Per-step and per-HQ cost limits |
+| No merge isolation | Shadow sync and merge queue |
+
+That is the evolution story: **from “spawn a sandbox and ask a human” to “an orchestrated pipeline with explicit context, cost, and merge control.”**
+
+## Hardening applied to this snapshot
+
+The snapshot was cleaned up before publication. The prototype logic is still the same design, but the unsafe defaults were removed:
+
+- The supervisor now requires `DISCORD_TOKEN`, `QUESTION_CHANNEL_ID`, `AUTHORIZED_USER_IDS`, `BRIDGE_TOKEN` (at least 16 characters), and `OPENROUTER_API_KEY`. It fails fast instead of starting half-configured.
+- `/create-container` is restricted to the Discord user IDs listed in `AUTHORIZED_USER_IDS`.
+- The `folder` option must be a plain name under `projects/`; traversal, absolute paths, and symlinks that escape the root are rejected. Container names are validated too.
+- The WebSocket bridge uses a token handshake over `/ws` instead of query-string authentication. A connection that does not authenticate within 5 seconds is closed.
+- Worker containers no longer receive `OPENROUTER_API_KEY`. They call the supervisor’s authenticated LLM proxy, which injects the real key upstream.
+- Host networking was replaced with Docker bridge networking and `host.docker.internal:host-gateway`.
+- Containers run with `AutoRemove`, a 2 GB memory limit, 2 CPUs, a 512-process limit, `CapDrop: ALL`, `no-new-privileges`, and a `noexec` `/tmp`.
+- Worker commands go through an allowlist and shell-metacharacter check by default, with a 60-second timeout and a 1 MB output buffer.
+- File tools resolve paths inside the project root, so the agent cannot read or write outside `/app`.
+- Questions are serialized in the supervisor, so two concurrent workers cannot race for the same Discord reply.
+- The worker image is configurable through `WORKER_IMAGE` instead of being hardcoded.
+- The worker code lives in `/init`; the host workspace is mounted at `/app`, removing the old `/app/project` mismatch.
+
+### Prototype bugs fixed during cleanup
+
+The original snapshot shipped with several logic bugs. They were fixed rather than preserved:
+
+- The planner filtered the wrong registry names (`thinking_agent`/`planner_agent` vs. `thinking_employe`/`planner_employe`).
+- The planner produced semicolon-separated tasks while the manager split on newlines; the manager now accepts both.
+- Tasks were dispatched without accumulated `history`; history is now passed through the loop.
+- `write_file` split input on every comma; it now splits only on the first comma.
+- The answer validator stored no expected schema and always JSON-parsed, so plain `z.string()` answers failed. It now handles strings and structured values correctly.
+- Command execution ran in `/app/project`; it now runs in `/app`.
+- The Discord prompt said “within 5 minutes” while the collector timed out after 10; both now say 10 minutes.
+- The meaningless `ws.send()` error-code check was removed.
+- The unused `Verification`/`Execution` stubs were removed.
+
+## Status
+
+Archived prototype, hardened for inspection and careful local use. It is **not production-ready** and has no tests.
+
+## Remaining security limits
+
+Read these before running it anywhere:
+
+- **The Docker socket is root-equivalent on the host.** The supervisor mounts `/var/run/docker.sock`. Anyone who can control the bot process can control Docker, and therefore the host. Run it on a dedicated machine or VM, never on a personal workstation.
+- **The bridge listens on all interfaces by default.** Worker containers reach the host through `host.docker.internal`, so `WS_HOST=0.0.0.0` is the practical default. Set `WS_HOST` to the Docker bridge gateway (for example `172.17.0.1`) and firewall the port if the host has other network exposure.
+- **The command allowlist is a guardrail, not a boundary.** It checks the first token and blocks shell metacharacters, but interpreters such as `bun`, `node`, `npx`, `git`, `sed`, and `awk` can still execute arbitrary code. The container is the real boundary.
+- **Any human in `QUESTION_CHANNEL_ID` can answer questions.** There is no per-question authorization. Keep the channel private and do not invite untrusted users.
+- **The LLM proxy trusts any holder of `BRIDGE_TOKEN`.** A compromised worker can spend the supervisor’s OpenRouter budget. Use a scoped key and a spending limit.
+- **The workspace is writable.** The agent can modify or delete files in `projects/<folder>` because that folder is bind-mounted into the container.
+- **There is no audit trail.** Containers use `AutoRemove`, and messages are sent to Discord rather than stored. Add logging before relying on it.
+- **Prompt injection is inherent.** Discord messages, file contents, and model output are untrusted input to an agent that can run commands.
+- **No rate limiting, cost accounting, state recovery, or test suite.** Those are TheForge features, not v0 features.
+
+## Quick start
+
+Prerequisites: Docker, Bun ≥ 1.2, a Discord application with a bot token, and an OpenRouter-compatible API key.
+
+```bash
+cd agent
+
+# 1. Install supervisor dependencies
+bun install
+
+# 2. Configure the environment
+cp .env.example .env
+# edit .env: DISCORD_TOKEN, CLIENT_ID, QUESTION_CHANNEL_ID,
+#            AUTHORIZED_USER_IDS, BRIDGE_TOKEN, OPENROUTER_API_KEY
+
+# 3. Build the worker image
+docker build -t bun-typescript-app ./app_template3
+
+# 4. Register the slash command
+bun run deploy-commands
+
+# 5. Start the supervisor
+bun run start
+```
+
+Create a workspace and run a task:
+
+```bash
+mkdir -p projects/demo
+```
+
+Then, in Discord:
+
+```text
+/create-container folder:demo name:demo-task command:"Build a small TypeScript CLI that prints the current time."
+```
+
+The supervisor validates `demo`, mounts `./projects/demo` at `/app`, starts the worker, and relays progress and questions to `QUESTION_CHANNEL_ID`.
+
+### How the bridge is wired
+
+The supervisor injects these values into each worker container:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `BRIDGE_TOKEN` | required | Shared secret for WebSocket and LLM proxy auth |
+| `WS_URL` | `ws://host.docker.internal:3000/ws` | Worker bridge endpoint |
+| `LLM_ENDPOINT` | `http://host.docker.internal:3000/llm/chat/completions` | Host-side LLM proxy |
+| `PROJECT_DIR` | `/app` | Workspace root for the file and command tools |
+| `ALLOWED_COMMANDS` | built-in list | Optional command allowlist; `*` disables it |
+
+The worker sends an `auth` message as its first WebSocket frame. The supervisor accepts only a constant-time token match and then relays `info`/`error`/`warn`/`debug` messages and `question`/`answer` exchanges.
+
+## Validation
+
+```bash
+bun run typecheck           # supervisor
+bun run typecheck:worker    # worker template
+
+bun build ./src/app.ts --target=bun --outdir=/tmp/agent-build
+bun build ./src/prompt_optimizer.ts --target=bun --outdir=/tmp/agent-build
+bun build ./app_template3/manager.ts --target=bun --outdir=/tmp/agent-build
+```
+
+Both typechecks pass on the cleaned snapshot.
+
+## Cleanup notes
+
+- No `.env`, bot token, OpenRouter key, or personal project data is included.
+- `node_modules/`, `.env*`, `projects/`, `dist/`, and logs are ignored.
+- The upstream `Discord-self-augmented-Bot` repository returns 404, so it could not be inspected or cleaned.
+- The `projects/` directory is kept only as an empty mount point; workspaces are not committed.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
+
+## Stack
+
+- Bun / TypeScript
+- `discord.js` v14
+- `dockerode`
+- `zod`
+- WebSocket (Bun server + browser-style client)
+- OpenRouter-compatible LLM API
+
+## Related
+
+- Current implementation: [`../theforge/version3/`](../theforge/version3/) and [github.com/edouwarden/theforge](https://github.com/edouwarden/theforge).
+- Original inspiration: [`edouwarden/Discord-self-augmented-Bot`](https://github.com/edouwarden/Discord-self-augmented-Bot) (no longer publicly reachable as of November 2026).
+- Portfolio index: [`../PROJECTS.md`](../PROJECTS.md).

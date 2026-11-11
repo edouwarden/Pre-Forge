@@ -1,0 +1,23 @@
+{
+    "agents": [
+        {
+            "name": "thinking_employe",
+            "description": "Un employé capable de réfléchir.",
+            "input": "string - L'objectif à atteindre",
+            "output": "any - Le résultat final de la réflexion"
+        },
+        {
+            "name": "planner_employe",
+            "description": "Un employé capable de planifier les tâches à effectuer",
+            "input": "string - L'objectif à atteindre",
+            "output": "any - La liste des tâches à effectuer"
+        },
+        {
+            "name": "coder_employe",
+            "description": "Un employé capable de coder, ecrire des fichiers, modifier des fichiers, supprimer des fichiers, executer des commandes, tester, debugger, etc.",
+            "input": "string - La tâche à effectuer",
+            "output": "any - Le résultat final de la tâche"
+        }
+
+    ]
+}

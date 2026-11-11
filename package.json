@@ -1,0 +1,30 @@
+{
+  "name": "discord-docker-bot",
+  "version": "1.0.0",
+  "description": "A Discord bot that manages Docker containers with WebSocket support",
+  "private": true,
+  "license": "MIT",
+  "main": "src/app.ts",
+  "packageManager": "bun@1.4.4",
+  "engines": {
+    "bun": ">=1.2.0"
+  },
+  "scripts": {
+    "start": "bun run src/app.ts",
+    "deploy-commands": "bun run src/deploy-commands.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:worker": "cd app_template3 && tsc --noEmit"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dockerode": "^4.0.0",
+    "dotenv": "^16.4.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.0.0",
+    "@types/dockerode": "^3.3.31",
+    "@types/node": "^20.11.19",
+    "typescript": "^5.8.2"
+  }
+}
