@@ -1,0 +1,286 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 840" width="1200" height="840" role="img" aria-labelledby="title desc">
+  <title id="title">Pre-Forge v0 animated demo</title>
+  <desc id="desc">A fake Discord channel shows a slash command being typed, a container being created, a plan confirmation, a human question, the answer bun, and a completed task. A worker terminal beside it shows the matching bridge and agent output.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#080d19"/>
+      <stop offset="0.55" stop-color="#0b1222"/>
+      <stop offset="1" stop-color="#10172b"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#121b2d"/>
+      <stop offset="1" stop-color="#0e1626"/>
+    </linearGradient>
+    <linearGradient id="discord" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5865f2"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 H0 V40" fill="none" stroke="#334155" stroke-width="1" opacity="0.14"/>
+    </pattern>
+    <clipPath id="composerClip">
+      <rect x="110" y="730" width="0" height="32">
+        <animate attributeName="width" values="0;0;490;490;0;0" keyTimes="0;0.025;0.15;0.155;0.16;1" dur="16s" repeatCount="indefinite" calcMode="linear"/>
+      </rect>
+    </clipPath>
+    <clipPath id="terminalClip">
+      <rect x="768" y="112" width="0" height="24">
+        <animate attributeName="width" values="0;0;158;158;158;0" keyTimes="0;0.1875;0.25;0.96;0.965;1" dur="16s" repeatCount="indefinite" calcMode="linear"/>
+      </rect>
+    </clipPath>
+  </defs>
+
+  <style>
+    .ui { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    .panel-title { font: 600 14px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e2e8f0; }
+    .chan { font: 600 16px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #f1f5f9; }
+    .topic { font: 400 12px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #7c8aa5; }
+    .name { font: 600 13px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e2e8f0; }
+    .body { font: 400 13px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #cbd5e1; }
+    .body-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; fill: #cbd5e1; }
+    .muted { fill: #7c8aa5; }
+    .green { fill: #34d399; }
+    .amber { fill: #fbbf24; }
+    .violet { fill: #a78bfa; }
+    .cyan { fill: #22d3ee; }
+    .blurple { fill: #818cf8; }
+    .tiny { font-size: 11px; }
+    .small { font-size: 12px; }
+    .badge { font: 600 10px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .blink { animation: blink 1s steps(1, end) infinite; }
+    .live { animation: pulse 2s ease-in-out infinite; }
+    @keyframes blink { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    @media (prefers-reduced-motion: reduce) {
+      .blink, .live { animation: none; }
+    }
+  </style>
+
+  <rect width="1200" height="840" rx="26" fill="url(#bg)"/>
+  <rect width="1200" height="840" rx="26" fill="url(#grid)"/>
+  <ellipse cx="180" cy="150" rx="280" ry="200" fill="#5865f2" opacity="0.09"/>
+  <ellipse cx="1040" cy="650" rx="320" ry="240" fill="#8b5cf6" opacity="0.07"/>
+
+  <!-- ============================= Discord panel ============================= -->
+  <rect x="40" y="40" width="680" height="760" rx="18" fill="url(#panel)" stroke="#243149"/>
+  <circle cx="64" cy="68" r="5" fill="#f87171"/>
+  <circle cx="84" cy="68" r="5" fill="#fbbf24"/>
+  <circle cx="104" cy="68" r="5" fill="#34d399"/>
+  <text x="132" y="73" class="panel-title">agent-lab</text>
+  <rect x="620" y="56" width="76" height="24" rx="12" fill="#16213a" stroke="#2b3a57"/>
+  <text x="658" y="72" text-anchor="middle" class="badge muted">MOCK UI</text>
+  <line x1="40" y1="92" x2="720" y2="92" stroke="#243149"/>
+
+  <text x="70" y="120" class="chan"># agent-lab</text>
+  <text x="192" y="120" class="topic">Pre-Forge v0 · mock interface</text>
+  <circle cx="690" cy="115" r="4" fill="#34d399" class="live"/>
+  <text x="680" y="120" text-anchor="end" class="tiny green">live</text>
+  <line x1="40" y1="136" x2="720" y2="136" stroke="#243149"/>
+
+  <!-- 1. user command -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="170" r="14" fill="url(#discord)"/>
+    <text x="78" y="175" text-anchor="middle" class="name" fill="#ffffff">E</text>
+    <text x="100" y="164" class="name">edouard <tspan class="tiny muted">today at 14:02</tspan></text>
+    <text x="100" y="186" class="body-mono blurple">/create-container folder:demo name:demo command:"build CLI"</text>
+  </g>
+
+  <!-- 2. container created -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.181;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="216" r="14" fill="#1d1739" stroke="#7c3aed"/>
+    <text x="78" y="221" text-anchor="middle" class="tiny violet">PF</text>
+    <text x="100" y="210" class="name">Pre-Forge <tspan class="badge" fill="#818cf8">BOT</tspan></text>
+    <text x="100" y="232" class="body"><tspan class="green">✓</tspan> Container demo created</text>
+    <text x="100" y="250" class="body-mono muted">projects/demo → /app · bridge token injected</text>
+  </g>
+
+  <!-- 3. plan -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.2875;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="286" r="14" fill="#1d1739" stroke="#7c3aed"/>
+    <text x="78" y="291" text-anchor="middle" class="tiny violet">PF</text>
+    <text x="100" y="280" class="name">Pre-Forge <tspan class="badge" fill="#818cf8">BOT</tspan></text>
+    <text x="100" y="302" class="body">Here is my plan:</text>
+    <text x="100" y="322" class="body"><tspan class="muted">1.</tspan> coder: scaffold a tiny CLI</text>
+    <text x="100" y="342" class="body"><tspan class="muted">2.</tspan> coder: add a time command</text>
+    <text x="100" y="362" class="body"><tspan class="muted">3.</tspan> thinking: verify the output</text>
+    <text x="100" y="382" class="body"><tspan class="muted">4.</tspan> coder: write a README</text>
+  </g>
+
+  <!-- 4. plan confirmation -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.375;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="414" r="14" fill="#1d1739" stroke="#7c3aed"/>
+    <text x="78" y="419" text-anchor="middle" class="tiny violet">PF</text>
+    <text x="100" y="408" class="name">Pre-Forge <tspan class="badge" fill="#818cf8">BOT</tspan></text>
+    <text x="100" y="430" class="body">Confirm the task? <tspan class="mono small amber">[ yes | retry | stop ]</tspan></text>
+  </g>
+
+  <!-- 5. user yes -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.45;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="462" r="14" fill="url(#discord)"/>
+    <text x="78" y="467" text-anchor="middle" class="name" fill="#ffffff">E</text>
+    <text x="100" y="456" class="name">edouard <tspan class="tiny muted">today at 14:03</tspan></text>
+    <text x="100" y="478" class="body">yes</text>
+  </g>
+
+  <!-- 6. coder -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.5125;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="510" r="14" fill="#1d1739" stroke="#7c3aed"/>
+    <text x="78" y="515" text-anchor="middle" class="tiny violet">PF</text>
+    <text x="100" y="504" class="name">Pre-Forge <tspan class="badge" fill="#818cf8">BOT</tspan></text>
+    <text x="100" y="526" class="body"><tspan class="violet">▶</tspan> coder: scaffold a tiny CLI</text>
+  </g>
+
+  <!-- 7. human question -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.5875;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="560" r="14" fill="#1d1739" stroke="#7c3aed"/>
+    <text x="78" y="565" text-anchor="middle" class="tiny violet">PF</text>
+    <text x="100" y="554" class="name">Pre-Forge <tspan class="badge" fill="#818cf8">BOT</tspan></text>
+    <text x="100" y="576" class="body"><tspan class="amber">?</tspan> Which package manager should I use?</text>
+    <text x="100" y="594" class="body-mono muted">Expected format: bun | npm | pnpm</text>
+  </g>
+
+  <!-- 8. user bun -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.675;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="626" r="14" fill="url(#discord)"/>
+    <text x="78" y="631" text-anchor="middle" class="name" fill="#ffffff">E</text>
+    <text x="100" y="620" class="name">edouard <tspan class="tiny muted">today at 14:06</tspan></text>
+    <text x="100" y="642" class="body">bun</text>
+  </g>
+
+  <!-- 9. completed -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.75;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <circle cx="78" cy="664" r="14" fill="#1d1739" stroke="#7c3aed"/>
+    <text x="78" y="669" text-anchor="middle" class="tiny violet">PF</text>
+    <text x="100" y="658" class="name">Pre-Forge <tspan class="badge" fill="#818cf8">BOT</tspan></text>
+    <text x="100" y="680" class="body"><tspan class="green">✓</tspan> Task completed · 3 files written</text>
+    <text x="100" y="698" class="body"><tspan class="amber">→</tspan> Result: CLI ready · <tspan class="mono small">bun run cli.ts</tspan></text>
+  </g>
+
+  <!-- Composer -->
+  <rect x="64" y="716" width="632" height="64" rx="14" fill="#1a2335" stroke="#2b3a57"/>
+  <circle cx="88" cy="748" r="12" fill="#26334d"/>
+  <text x="88" y="753" text-anchor="middle" class="name muted">+</text>
+
+  <!-- placeholder -->
+  <text x="110" y="753" class="body muted" opacity="1">
+    Message #agent-lab
+    <animate attributeName="opacity" values="1;1;0;0;1;1" keyTimes="0;0.025;0.03;0.16;0.165;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+  </text>
+
+  <!-- typed command -->
+  <g clip-path="url(#composerClip)">
+    <text x="110" y="753" class="body-mono">/create-container folder:demo name:demo command:"build CLI"</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.16;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <rect x="110" y="738" width="2" height="18" fill="#c7d2fe" class="blink">
+      <animate attributeName="x" values="110;110;590;590;110;110" keyTimes="0;0.025;0.15;0.155;0.16;1" dur="16s" repeatCount="indefinite" calcMode="linear"/>
+    </rect>
+  </g>
+
+  <circle cx="668" cy="748" r="14" fill="#5865f2"/>
+  <path d="M663 753 L673 748 L663 743" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ============================= Terminal panel ============================= -->
+  <rect x="750" y="40" width="410" height="450" rx="18" fill="url(#panel)" stroke="#243149"/>
+  <circle cx="774" cy="68" r="5" fill="#f87171"/>
+  <circle cx="794" cy="68" r="5" fill="#fbbf24"/>
+  <circle cx="814" cy="68" r="5" fill="#34d399"/>
+  <text x="842" y="73" class="panel-title">worker — /app</text>
+  <rect x="1070" y="56" width="66" height="24" rx="12" fill="#0c2530" stroke="#1f4b55"/>
+  <text x="1103" y="72" text-anchor="middle" class="badge cyan">BUN</text>
+  <line x1="750" y1="92" x2="1160" y2="92" stroke="#243149"/>
+
+  <!-- terminal command, typed -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1875;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="128" class="mono small" fill="#cbd5e1" clip-path="url(#terminalClip)">$ bun run manager.ts</text>
+    <g opacity="0">
+      <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.1875;0.25;0.26;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+      <rect x="768" y="116" width="7" height="17" fill="#a78bfa" class="blink">
+        <animate attributeName="x" values="768;768;926;926;768;768" keyTimes="0;0.1875;0.25;0.26;0.261;1" dur="16s" repeatCount="indefinite" calcMode="linear"/>
+      </rect>
+    </g>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.275;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="155" class="mono small"><tspan class="green">✓</tspan> bridge authenticated</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.3125;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="182" class="mono small"><tspan class="cyan">→</tspan> planner: 4 tasks</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.375;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="209" class="mono small"><tspan class="violet">▸</tspan> coder: scaffold a tiny CLI</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.4375;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="236" class="mono small"><tspan class="violet">▸</tspan> coder: add a time command</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.5875;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="263" class="mono small"><tspan class="amber">?</tspan> ask_user: package manager?</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.675;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="290" class="mono small"><tspan class="green">←</tspan> bun</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.725;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="317" class="mono small"><tspan class="green">✓</tspan> build passed</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.775;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="344" class="mono small"><tspan class="green">✓</tspan> result: CLI ready</text>
+  </g>
+
+  <!-- terminal prompt -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.8125;0.965;1" dur="16s" repeatCount="indefinite" calcMode="discrete"/>
+    <text x="768" y="398" class="mono small green">$</text>
+    <rect x="786" y="384" width="8" height="17" fill="#a78bfa" class="blink"/>
+  </g>
+
+  <line x1="770" y1="442" x2="1140" y2="442" stroke="#243149"/>
+  <circle cx="780" cy="463" r="4" fill="#34d399" class="live"/>
+  <text x="792" y="467" class="tiny muted">worker · /app · bridge connected</text>
+
+  <!-- ============================= Note card ============================= -->
+  <rect x="750" y="510" width="410" height="290" rx="18" fill="url(#panel)" stroke="#243149"/>
+  <text x="778" y="548" class="chan">Human in the loop</text>
+  <text x="778" y="582" class="body" fill="#e2e8f0">The agent stops and asks</text>
+  <text x="778" y="604" class="body" fill="#e2e8f0">instead of guessing.</text>
+
+  <rect x="778" y="636" width="100" height="34" rx="17" fill="#1d1739" stroke="#3b2a63"/>
+  <text x="828" y="658" text-anchor="middle" class="tiny violet">worker</text>
+  <text x="892" y="658" text-anchor="middle" class="body muted">→</text>
+  <rect x="914" y="636" width="100" height="34" rx="17" fill="#141c3d" stroke="#2c3d75"/>
+  <text x="964" y="658" text-anchor="middle" class="tiny blurple">discord</text>
+  <text x="1028" y="658" text-anchor="middle" class="body muted">→</text>
+  <rect x="1050" y="636" width="82" height="34" rx="17" fill="#0f2a24" stroke="#1f5144"/>
+  <text x="1091" y="658" text-anchor="middle" class="tiny green">you</text>
+
+  <circle cx="784" cy="712" r="4" fill="#34d399" class="live"/>
+  <text x="796" y="716" class="tiny muted">The answer returns over the same bridge.</text>
+  <text x="778" y="760" class="tiny muted">Fake interface · nothing executes · MIT</text>
+</svg>

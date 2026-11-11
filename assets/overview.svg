@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" role="img" aria-labelledby="title desc">
+  <title id="title">Pre-Forge v0 architecture</title>
+  <desc id="desc">Discord sends a slash command to the supervisor bot, which creates a Docker worker container. The worker talks back over an authenticated WebSocket bridge, and questions loop back to a human in Discord.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#080d19"/>
+      <stop offset="0.55" stop-color="#0b1222"/>
+      <stop offset="1" stop-color="#10172b"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#131d31"/>
+      <stop offset="1" stop-color="#0f1728"/>
+    </linearGradient>
+    <linearGradient id="discordGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5865f2"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 H0 V40" fill="none" stroke="#334155" stroke-width="1" opacity="0.18"/>
+    </pattern>
+    <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#818cf8"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#34d399"/>
+    </marker>
+  </defs>
+
+  <style>
+    .title { font: 700 34px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #f8fafc; letter-spacing: -0.6px; }
+    .subtitle { font: 400 15px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #94a3b8; }
+    .card-title { font: 600 17px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #f1f5f9; }
+    .card-sub { font: 400 12px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #7c8aa5; }
+    .body { font: 400 13.5px Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: #cbd5e1; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    .small { font-size: 12px; }
+    .tiny { font-size: 11px; }
+    .muted { fill: #7c8aa5; }
+    .green { fill: #34d399; }
+    .amber { fill: #fbbf24; }
+    .violet { fill: #a78bfa; }
+    .cyan { fill: #22d3ee; }
+    .blurple { fill: #818cf8; }
+    .flow { stroke-dasharray: 6 7; animation: dash 1.6s linear infinite; }
+    .pulse { animation: pulse 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    .pulse-slow { animation: pulse 3.4s ease-in-out infinite; }
+    .pill { fill: #0c1525; stroke: #26334d; }
+    @keyframes dash { to { stroke-dashoffset: -26; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    @media (prefers-reduced-motion: reduce) {
+      .flow, .pulse, .pulse-slow { animation: none; }
+    }
+  </style>
+
+  <rect width="1200" height="720" rx="26" fill="url(#bg)"/>
+  <rect width="1200" height="720" rx="26" fill="url(#grid)"/>
+  <ellipse cx="170" cy="120" rx="260" ry="180" fill="#5865f2" opacity="0.10"/>
+  <ellipse cx="1030" cy="560" rx="300" ry="220" fill="#8b5cf6" opacity="0.08"/>
+
+  <text x="60" y="66" class="title">Pre-Forge <tspan class="blurple">v0</tspan></text>
+  <text x="60" y="96" class="subtitle">A Discord-controlled Docker sandbox with human escalation</text>
+
+  <!-- Discord card -->
+  <rect x="60" y="150" width="300" height="340" rx="18" fill="url(#card)" stroke="#243149"/>
+  <circle cx="90" cy="184" r="7" fill="url(#discordGlow)" class="pulse"/>
+  <text x="108" y="190" class="card-title">Discord</text>
+  <text x="90" y="214" class="card-sub">human control surface</text>
+  <line x1="84" y1="230" x2="336" y2="230" stroke="#243149"/>
+
+  <rect x="84" y="248" width="252" height="46" rx="10" fill="#0a1120" stroke="#2b3a57"/>
+  <text x="98" y="276" class="mono small blurple">/create-container</text>
+
+  <text x="90" y="322" class="body mono small"><tspan class="muted">folder:</tspan> demo</text>
+  <text x="90" y="350" class="body mono small"><tspan class="muted">name:</tspan> demo-task</text>
+  <text x="90" y="378" class="body mono small"><tspan class="muted">command:</tspan> build a CLI</text>
+
+  <circle cx="90" cy="422" r="4" fill="#34d399"/>
+  <text x="102" y="426" class="body small">Humans answer agent questions</text>
+  <text x="102" y="446" class="body small muted">in the configured private channel.</text>
+
+  <rect x="84" y="462" width="160" height="16" rx="8" fill="#0f2a24"/>
+  <text x="94" y="474" class="tiny green">human-in-the-loop</text>
+
+  <!-- Supervisor card -->
+  <rect x="450" y="130" width="300" height="380" rx="18" fill="url(#card)" stroke="#243149"/>
+  <circle cx="480" cy="164" r="7" fill="#22d3ee" class="pulse"/>
+  <text x="498" y="170" class="card-title">Supervisor bot</text>
+  <text x="480" y="194" class="card-sub">src/app.ts · Bun</text>
+  <line x1="474" y1="210" x2="726" y2="210" stroke="#243149"/>
+
+  <text x="480" y="244" class="body"><tspan class="green">✓</tspan> validate folder + Discord user</text>
+  <text x="480" y="278" class="body"><tspan class="green">✓</tspan> create the sandbox container</text>
+  <text x="480" y="312" class="body"><tspan class="green">✓</tspan> token-authenticated bridge</text>
+  <text x="480" y="346" class="body"><tspan class="green">✓</tspan> host-side LLM proxy</text>
+  <text x="480" y="380" class="body"><tspan class="green">✓</tspan> serialize human questions</text>
+
+  <rect x="474" y="414" width="252" height="42" rx="9" fill="#0a1120" stroke="#2b3a57"/>
+  <text x="488" y="440" class="mono tiny muted">Docker API · /var/run/docker.sock</text>
+
+  <rect x="474" y="468" width="170" height="16" rx="8" fill="#0c2530"/>
+  <text x="484" y="480" class="tiny cyan">bridge network + limits</text>
+
+  <!-- Worker card -->
+  <rect x="840" y="150" width="300" height="340" rx="18" fill="url(#card)" stroke="#243149"/>
+  <circle cx="870" cy="184" r="7" fill="#a78bfa" class="pulse"/>
+  <text x="888" y="190" class="card-title">Worker container</text>
+  <text x="870" y="214" class="card-sub">app_template3 · /app</text>
+  <line x1="864" y1="230" x2="1116" y2="230" stroke="#243149"/>
+
+  <text x="870" y="264" class="body">manager <tspan class="muted">→</tspan> planner</text>
+  <text x="870" y="298" class="body">coder <tspan class="muted">/</tspan> thinking</text>
+  <text x="870" y="332" class="body">read <tspan class="muted">·</tspan> write <tspan class="muted">·</tspan> execute</text>
+  <text x="870" y="366" class="body">ask_user <tspan class="muted">→</tspan> bridge</text>
+  <text x="870" y="400" class="body"><tspan class="muted">limits:</tspan> 2 GB <tspan class="muted">·</tspan> 2 CPU <tspan class="muted">·</tspan> no host net</text>
+
+  <rect x="864" y="432" width="150" height="16" rx="8" fill="#1d1739"/>
+  <text x="874" y="444" class="tiny violet">path-confined tools</text>
+
+  <!-- Main arrows -->
+  <path d="M360 315 H444" fill="none" stroke="#475569" stroke-width="2" class="flow" marker-end="url(#arrowBlue)"/>
+  <text x="402" y="301" text-anchor="middle" class="tiny muted">slash command</text>
+  <circle r="4" fill="#818cf8">
+    <animateMotion dur="2.4s" repeatCount="indefinite" path="M360 315 H444"/>
+  </circle>
+
+  <path d="M750 315 H834" fill="none" stroke="#475569" stroke-width="2" class="flow" marker-end="url(#arrowBlue)"/>
+  <text x="792" y="301" text-anchor="middle" class="tiny muted">ws://…/ws</text>
+  <circle r="4" fill="#818cf8">
+    <animateMotion dur="2.4s" repeatCount="indefinite" path="M750 315 H834"/>
+  </circle>
+
+  <!-- Human escalation loop -->
+  <path d="M210 492 V590 H990 V492" fill="none" stroke="#475569" stroke-width="2" class="flow" marker-start="url(#arrowGreen)" marker-end="url(#arrowAmber)"/>
+  <text x="600" y="614" text-anchor="middle" class="tiny muted">questions ↔ answers · the worker can stop and ask a real person</text>
+  <circle r="4" fill="#fbbf24">
+    <animateMotion dur="4.8s" repeatCount="indefinite" path="M210 492 V590 H990 V492"/>
+  </circle>
+  <circle r="4" fill="#34d399">
+    <animateMotion dur="4.8s" repeatCount="indefinite" path="M210 492 V590 H990 V492" keyPoints="1;0" keyTimes="0;1" calcMode="linear"/>
+  </circle>
+
+  <!-- Bottom capability pills -->
+  <g class="tiny">
+    <rect x="60" y="650" width="232" height="34" rx="17" class="pill"/>
+    <text x="78" y="672" class="body small"><tspan class="green">●</tspan>  token handshake on /ws</text>
+
+    <rect x="308" y="650" width="232" height="34" rx="17" class="pill"/>
+    <text x="326" y="672" class="body small"><tspan class="cyan">●</tspan>  host-side LLM proxy</text>
+
+    <rect x="556" y="650" width="252" height="34" rx="17" class="pill"/>
+    <text x="574" y="672" class="body small"><tspan class="violet">●</tspan>  no API key in workers</text>
+
+    <rect x="824" y="650" width="316" height="34" rx="17" class="pill"/>
+    <text x="842" y="672" class="body small"><tspan class="amber">●</tspan>  allowlist + project-root confinement</text>
+  </g>
+
+  <text x="1140" y="698" text-anchor="end" class="tiny muted">archived prototype · MIT</text>
+</svg>
